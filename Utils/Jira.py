@@ -1,5 +1,6 @@
 import os
 import json
+import logging
 
 from Config import *
 
@@ -37,7 +38,7 @@ class Jira :
 
   def invoke(self,cmd):
     jsonFile='exportJira.json'
-    print(cmd)
+    logging.debug(cmd)
     os.system(cmd+ '| grep "^{" > ' + jsonFile)
     with open(jsonFile, 'r') as f:
       datas = json.load(f)

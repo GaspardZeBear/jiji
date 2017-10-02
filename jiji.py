@@ -3,12 +3,13 @@ import os
 import sys
 import re
 import argparse
+import logging
 from Utils.Config import *
 from Utils.Jira import *
 
 reload(sys)
 sys.setdefaultencoding('utf-8')
-from pprint import pprint
+from pprint import pprint,pformat
 
 status = {'Open':         'Activ',
           'In Progress' : 'Activ',
@@ -25,19 +26,26 @@ def fInspect(args=None) :
 
 #----------------------------------------------------------------
 def fList(args=None) :
+  logging.debug(pformat(args) )
   jira=Jira()
   datas=jira.getJiraList()
   for d in datas["issues"] :
     #pprint(d)
     #exit()
     f=d["fields"]
-    if status[f["status"]["name"]][0:1] not in args.status :
+    if status[f["status"]["name"]][0:1] not in args.status[0] :
+      #print("filtered by status")
       continue
-    if f["components"][0]["name"][0:1] not in args.comp :
+    if f["components"][0]["name"][0:1] not in args.components[0] :
+      pprint(d)
+      #print("filtered by component")
+      #print('{} ... {}'.format(f["components"][0]["name"][0:1], args.components))
       continue
     if args.summary and re.search(args.summary[0],f["summary"].encode('ascii','replace')) is None :
+      #print("filtered by summary")
       continue
     if args.assignee and re.search(args.assignee[0],f["assignee"]["emailAddress"]) is None :
+      #print("filtered by assignee")
       continue
     print('{:13.13};{};{:5.5};{};{};{:3.3};{:3.3};{:3.3};{:50.50};{:40.40};{:30.30}'.format(
       d["key"],
@@ -59,6 +67,7 @@ def fCache(args=None) :
 
 #----------------------------------------------------------------
 def fScan(args=None) :
+  logging.debug(pformat(args) )
   jira=Jira()
   datas=jira.getComments(args.jirano)
   #pprint(datas)
@@ -85,21 +94,35 @@ def fScan(args=None) :
 
 #----------------------------------------------------------------
 def fComment(args=None) :
+  logging.debug(pformat(args) )
   jira=Jira()
   datas=jira.addComment(args.jirano,args.body)
   return
 
 
 #----------------------------------------------------------------
+
 parser = argparse.ArgumentParser()
+parser.add_argument(
+    '-d', '--debug',
+    help="Print lots of debugging statements",
+    action="store_const", dest="loglevel", const=logging.DEBUG,
+    default=logging.WARNING,
+)
+parser.add_argument(
+    '-v', '--verbose',
+    help="Be verbose",
+    action="store_const", dest="loglevel", const=logging.INFO,
+)
+
 subparsers = parser.add_subparsers(help='sub-command help')
 
 parserList = subparsers.add_parser('list', help='a help')
 parserList.set_defaults(func=fList)
 parserList.add_argument('--summary','-f',nargs=1,help="filter for list")
 parserList.add_argument('--assignee','-a',nargs=1,help="assignee")
-parserList.add_argument('--comp','-c',nargs=1,help="component Bench, Support, Project ",default='BSP')
-parserList.add_argument('--status','-s',nargs=1,help="status Activ,Inact ",default='A')
+parserList.add_argument('--components','-c',nargs=1,help="component Bench, Support, Project ",default=['BDSP'])
+parserList.add_argument('--status','-s',nargs=1,help="status Activ,Inact ",default=['A'])
 
 parserInspect = subparsers.add_parser('inspect', help='a help')
 parserInspect.set_defaults(func=fInspect)
@@ -111,7 +134,7 @@ parserCache.add_argument('num',nargs='?',help="num of file to cache")
 parserScan = subparsers.add_parser('scan', help='a help')
 parserScan.set_defaults(func=fScan)
 parserScan.add_argument('jirano',nargs='?',help="item to scan (given by list)")
-parserScan.add_argument('--show','-s',nargs=1,help="Comments, Transitions",default='CT')
+parserScan.add_argument('--show','-s',nargs=1,help="Comments, Transitions",default=['CT'])
 
 parserComment = subparsers.add_parser('comment', help='a help')
 parserComment.set_defaults(func=fComment)
@@ -119,5 +142,8 @@ parserComment.add_argument('jirano',nargs='?',help="item to comment (given by li
 parserComment.add_argument('--body','-s',nargs=1,help="Comment",default='Seen')
 
 args=parser.parse_args()
+logging.basicConfig(format="%(asctime)s %(funcName)s %(levelname)s %(message)s", level=args.loglevel) 
+
+
 args.func(args)
 
