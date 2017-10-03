@@ -18,9 +18,9 @@ status = {'Open':         'Activ',
 }
 
 #----------------------------------------------------------------
-def fInspect(args=None) :
+def fSample(args=None) :
   jira=Jira()
-  datas=jira.getInspect()
+  datas=jira.getSample()
   pprint(datas)
 
 
@@ -66,7 +66,7 @@ def fCache(args=None) :
   return
 
 #----------------------------------------------------------------
-def fScan(args=None) :
+def fInspect(args=None) :
   logging.debug(pformat(args) )
   jira=Jira()
   datas=jira.getComments(args.jirano)
@@ -124,17 +124,17 @@ parserList.add_argument('--assignee','-a',nargs=1,help="assignee")
 parserList.add_argument('--components','-c',nargs=1,help="component Bench, Support, Project ",default=['BDSP'])
 parserList.add_argument('--status','-s',nargs=1,help="status Activ,Inact ",default=['A'])
 
-parserInspect = subparsers.add_parser('inspect', help='a help')
-parserInspect.set_defaults(func=fInspect)
+parserSample = subparsers.add_parser('sample', help='a help')
+parserSample.set_defaults(func=fSample)
 
 parserCache = subparsers.add_parser('cache', help='a help')
 parserCache.set_defaults(func=fCache)
 parserCache.add_argument('num',nargs='?',help="num of file to cache")
 
-parserScan = subparsers.add_parser('scan', help='a help')
-parserScan.set_defaults(func=fScan)
-parserScan.add_argument('jirano',nargs='?',help="item to scan (given by list)")
-parserScan.add_argument('--show','-s',nargs=1,help="Comments, Transitions",default=['CT'])
+parserInspect = subparsers.add_parser('inspect', help='a help')
+parserInspect.set_defaults(func=fInspect)
+parserInspect.add_argument('jirano',nargs='?',help="item to inspect (given by list)")
+parserInspect.add_argument('--show','-s',nargs=1,help="Comments, Transitions",default=['CT'])
 
 parserComment = subparsers.add_parser('comment', help='a help')
 parserComment.set_defaults(func=fComment)

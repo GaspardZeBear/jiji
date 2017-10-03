@@ -7,7 +7,7 @@ from Config import *
 #----------------------------------------------------------------
 class Jira :
 
-  def getInspect(self):
+  def getSample(self):
     fields='["id","key","summary","components","creator","created","updated","status","customfield_30941","customfield_10370","customfield_11730"]'
     request='\'{"jql":"project =' + Config.JIRAPROJECT +'","startAt":0,"maxResults":1}\''
     cmd=Config.CURL + ' -X POST -H "Content-Type: application/json" --data ' + request + ' ' + Config.JIRAURL+'/rest/api/2/search'
