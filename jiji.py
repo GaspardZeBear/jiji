@@ -27,7 +27,7 @@ def fSample(args=None) :
 #----------------------------------------------------------------
 def displayIssue(datas) :
   f=datas["fields"]
-  print('{:13.13};{};{:5.5};{};{};{:3.3};{:3.3};{:3.3};{:50.50};{:40.40};{:30.30}'.format(
+  print('{:13.13};{};{:5.5};{};{};{:3.3};{:3.3};{:50.50};{:40.40};{:30.30}'.format(
       datas["key"],
       status[f["status"]["name"]],
       f["components"][0]["name"],
@@ -35,11 +35,11 @@ def displayIssue(datas) :
       f["updated"][0:10],
       f["creator"]["emailAddress"][0:20],
       f["assignee"]["emailAddress"][0:20],
-      f["reporter"]["emailAddress"][0:20],
       f["summary"].encode('ascii','replace'),
       f["customfield_10370"]["value"],
       f["customfield_11730"]
   ))
+#      f["reporter"]["emailAddress"][0:20],
 
 
 #----------------------------------------------------------------
@@ -48,22 +48,14 @@ def fList(args=None) :
   jira=Jira()
   datas=jira.getJiraList()
   for d in datas["issues"] :
-    #pprint(d)
-    #exit()
     f=d["fields"]
     if status[f["status"]["name"]][0:1] not in args.status[0] :
-      #print("filtered by status")
       continue
     if f["components"][0]["name"][0:1] not in args.components[0] :
-      pprint(d)
-      #print("filtered by component")
-      #print('{} ... {}'.format(f["components"][0]["name"][0:1], args.components))
       continue
     if args.summary and re.search(args.summary[0],f["summary"].encode('ascii','replace')) is None :
-      #print("filtered by summary")
       continue
     if args.assignee and re.search(args.assignee[0],f["assignee"]["emailAddress"]) is None :
-      #print("filtered by assignee")
       continue
     displayIssue(d)
   return
@@ -115,6 +107,7 @@ def fInspect(args=None) :
   datas=jira.getIssue(args.jirano)
   if 'H' in args.show[0] :
     showHeader(datas)
+    print(datas["fields"]["description"])
   if 'C' in args.show[0] :
     showComments(datas)
   if 'T' in args.show[0] :
@@ -128,6 +121,17 @@ def fComment(args=None) :
   logging.debug(pformat(args) )
   jira=Jira()
   datas=jira.addComment(args.jirano,args.body)
+  return
+
+#----------------------------------------------------------------
+def fTransition(args=None) :
+  logging.debug(pformat(args) )
+  jira=Jira()
+  jira.transition(args.jirano,args.status)
+  datas=jira.getIssue(args.jirano)
+  showHeader(datas)
+  datasT=jira.getTransitions(args.jirano)
+  showTransitions(datasT)
   return
 
 
@@ -152,7 +156,7 @@ parserList = subparsers.add_parser('list', help='a help')
 parserList.set_defaults(func=fList)
 parserList.add_argument('--summary','-f',nargs=1,help="filter for list")
 parserList.add_argument('--assignee','-a',nargs=1,help="assignee")
-parserList.add_argument('--components','-c',nargs=1,help="component Bench, Support, Project ",default=['BDSP'])
+parserList.add_argument('--components','-c',nargs=1,help="component Bench, Support, Project ",default=['BDISP'])
 parserList.add_argument('--status','-s',nargs=1,help="status Activ,Inact ",default=['A'])
 
 parserSample = subparsers.add_parser('sample', help='a help')
@@ -171,6 +175,11 @@ parserComment = subparsers.add_parser('comment', help='a help')
 parserComment.set_defaults(func=fComment)
 parserComment.add_argument('jirano',nargs='?',help="item to comment (given by list)")
 parserComment.add_argument('--body','-s',nargs=1,help="Comment",default='Seen')
+
+parserTransition = subparsers.add_parser('transition', help='a help')
+parserTransition.set_defaults(func=fTransition)
+parserTransition.add_argument('jirano',nargs='?',help="item to transition (given by list)")
+parserTransition.add_argument('--status','-s',nargs=1,help="Transition")
 
 args=parser.parse_args()
 logging.basicConfig(format="%(asctime)s %(funcName)s %(levelname)s %(message)s", level=args.loglevel) 

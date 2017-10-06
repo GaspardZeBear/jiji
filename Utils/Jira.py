@@ -3,6 +3,8 @@ import json
 import logging
 
 from Config import *
+from pprint import pprint,pformat
+
 
 #----------------------------------------------------------------
 class Jira :
@@ -33,23 +35,29 @@ class Jira :
     return(self.invoke(cmd))
 
   def addComment(self,num,comment):
-    request='\'{"body": "' + comment[0] + '"}\''
+    request='\'{"body": "' + 'From ' + Config.JIRANAME + ' : ' + comment[0] + '"}\''
     #cmd=Config.CURL + ' -X POST -H "Content-Type: application/json" --data ' + request + ' ' +  Config.JIRAURL+'/rest/api/latest/issue/' + Config.JIRAPROJECT + '-' + str(num) + '/comment'
     url='/rest/api/latest/issue/' + Config.JIRAPROJECT + '-' + str(num) + '/comment'
     cmd=self.jiraPost(request,url)
     return(self.invoke(cmd))
 
   def getTransitions(self,num):
-    #https://jira.itsm.atosworldline.com/rest/api/2/issue/SDCOBENCH-243/transitions
     cmd=Config.CURL + ' ' +  Config.JIRAURL +'/rest/api/latest/issue/' + Config.JIRAPROJECT + '-' + str(num) + '/transitions'
     return(self.invoke(cmd))
 
+  def transition(self,num,status):
+    request='\'{"transition":{"id":"' + str(status[0])+'"}}\''
+    cmd=self.jiraPost(request,'/rest/api/latest/issue/' + Config.JIRAPROJECT + '-' + str(num) + '/transitions')
+    return(self.invoke(cmd,False))
 
-  def invoke(self,cmd):
+  def invoke(self,cmd,returnDatas=True):
     jsonFile='exportJira.json'
     logging.debug(cmd)
     os.system(cmd+ '| grep "^{" > ' + jsonFile)
+    if not returnDatas :
+      return
     with open(jsonFile, 'r') as f:
       datas = json.load(f)
+    logging.debug(pformat(datas))
     return(datas)
 
