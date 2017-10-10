@@ -27,8 +27,9 @@ def fSample(args=None) :
 #----------------------------------------------------------------
 def displayIssue(datas) :
   f=datas["fields"]
-  print('{:13.13};{};{:5.5};{};{};{:3.3};{:3.3};{:50.50};{:40.40};{:30.30}'.format(
+  print('{:13.13};{:6.6};{};{:5.5};{};{};{:3.3};{:3.3};{:50.50};{:40.40};{:30.30}'.format(
       datas["key"],
+      f["status"]["name"],
       status[f["status"]["name"]],
       f["components"][0]["name"],
       f["created"][0:10],
@@ -45,8 +46,8 @@ def displayIssue(datas) :
 #----------------------------------------------------------------
 def fList(args=None) :
   logging.debug(pformat(args) )
-  jira=Jira()
-  datas=jira.getJiraList()
+  jira=Jirak()
+  datas=jira.getIssues()
   for d in datas["issues"] :
     f=d["fields"]
     if status[f["status"]["name"]][0:1] not in args.status[0] :
@@ -59,6 +60,7 @@ def fList(args=None) :
       continue
     displayIssue(d)
   return
+
 #----------------------------------------------------------------
 def fCache(args=None) :
   return
@@ -114,6 +116,22 @@ def fInspect(args=None) :
     datasT=jira.getTransitions(args.jirano)
     showTransitions(datasT)
   return
+
+#----------------------------------------------------------------
+def NfInspect(args=None) :
+  logging.debug(pformat(args) )
+  jira=Jirak()
+  datas=jira.getIssue(args.jirano)
+  if 'H' in args.show[0] :
+    showHeader(datas)
+    print(datas["fields"]["description"])
+  if 'C' in args.show[0] :
+    showComments(datas)
+  if 'T' in args.show[0] :
+    datasT=jira.getTransitions(args.jirano)
+    showTransitions(datasT)
+  return
+
 
 
 #----------------------------------------------------------------

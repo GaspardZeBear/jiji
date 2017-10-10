@@ -4,13 +4,49 @@ import logging
 
 from Config import *
 from pprint import pprint,pformat
+from jira import JIRA, JIRAError
 
+
+#----------------------------------------------------------------
+class Jirak :
+
+  def __init__(self) :
+    server={'server': Config.JIRAURL}
+    #print(Config.JIRAID + " " + Config.JIRAPW)
+    try :
+      self.jira = JIRA(options=server,basic_auth=(Config.JIRAID,Config.JIRAPW))
+    except Exception as e:
+      print("JIRAError in class Jira ")
+      pprint(e)
+      if hasattr(e,'text') :
+        print(e.text)
+    self.getIssues() 
+
+  def getIssues(self):
+    fields=["id","key","summary","components","creator","created","updated","status","customfield_30941","customfield_10370","customfield_11730","assignee","reporter"]
+    jql='project='+Config.JIRAPROJECT
+    issues = self.jira.search_issues(jql,maxResults=1000,fields=fields,json_result=True)
+    #for issue in issues :
+    #  print(issue.key)
+    return(issues)
+
+  def getIssueKey(self,num):
+    return(Config.JIRAPROJECT + '-' + str(num))
+
+  def getIssue(self,num):
+    return(self.jira.issue(self.getIssueKey(num)))
+
+  def getTransitions(self,num):
+    return(self.jira.transitions(self.getIssueKey(num)))
 
 #----------------------------------------------------------------
 class Jira :
 
   def jiraPost(self,request,url) :
     return(Config.CURLPOST + ' --data ' + request + ' ' +  Config.JIRAURL + url)
+
+  def getJiraRestUri(self,num,suffix,prefix="/rest/api/latest/issue/") :
+    return(url + '/' + Config.JIRAPROJECT + '-' + str(num) + suffix)
 
   def getSample(self):
     fields='["id","key","summary","components","creator","created","updated","status","customfield_30941","customfield_10370","customfield_11730"]'
@@ -32,6 +68,7 @@ class Jira :
 
   def getComments(self,num):
     cmd=Config.CURL + ' ' +  Config.JIRAURL +'/rest/api/latest/issue/' + Config.JIRAPROJECT + '-' + str(num) + '/comment'
+    cmd=Config.CURL + ' ' +  Config.JIRAURL + self.getJiraRestUri(num,'/comment')
     return(self.invoke(cmd))
 
   def addComment(self,num,comment):
