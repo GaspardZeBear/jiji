@@ -14,7 +14,9 @@ from pprint import pprint,pformat
 status = {'Open':         'Activ',
           'In Progress' : 'Activ',
           'Solved'      : 'Activ',
-          'Closed' :      'Inact'
+          'Closed' :      'Inact',
+          'Expertised' :      'Activ',
+          'Information needed' : 'Activ'
 }
 
 #----------------------------------------------------------------
@@ -25,13 +27,27 @@ def fSample(args=None) :
 
 
 #----------------------------------------------------------------
+def translateStatus(stat) :
+  if stat in status :
+    return(status[stat])
+  return(stat)
+
+#----------------------------------------------------------------
+def getComponent(fields) :
+  if len(fields["components"]) > 0 :
+    return(fields["components"][0]["name"])
+  return("Unknown")
+
+
+#----------------------------------------------------------------
 def displayIssue(datas) :
   f=datas["fields"]
-  print('{:13.13};{:6.6};{};{:5.5};{};{};{:3.3};{:3.3};{:50.50};{:40.40};{:30.30}'.format(
+  print('{:13.13};{:6.6};{:6.6};{:6.6};{:5.5};{};{};{:3.3};{:3.3};{:50.50};{:40.40};{:30.30}'.format(
       datas["key"],
+      f["issuetype"]["name"],
       f["status"]["name"],
-      status[f["status"]["name"]],
-      f["components"][0]["name"],
+      translateStatus(f["status"]["name"]),
+      getComponent(f),
       f["created"][0:10],
       f["updated"][0:10],
       f["creator"]["emailAddress"][0:20],
@@ -41,6 +57,7 @@ def displayIssue(datas) :
       f["customfield_11730"]
   ))
 #      f["reporter"]["emailAddress"][0:20],
+#      status[f["status"]["name"]],
 
 
 #----------------------------------------------------------------
@@ -49,16 +66,22 @@ def fList(args=None) :
   jira=Jirak()
   datas=jira.getIssues()
   for d in datas["issues"] :
-    f=d["fields"]
-    if status[f["status"]["name"]][0:1] not in args.status[0] :
-      continue
-    if f["components"][0]["name"][0:1] not in args.components[0] :
-      continue
-    if args.summary and re.search(args.summary[0],f["summary"].encode('ascii','replace')) is None :
-      continue
-    if args.assignee and re.search(args.assignee[0],f["assignee"]["emailAddress"]) is None :
-      continue
-    displayIssue(d)
+    try :
+      f=d["fields"]
+      if f["status"]["name"] in status :
+        if status[f["status"]["name"]][0:1] not in args.status[0] :
+          continue
+      if f["components"][0]["name"][0:1] not in args.components[0] :
+        continue
+      if args.summary and re.search(args.summary[0],f["summary"].encode('ascii','replace')) is None :
+        continue
+      if args.assignee and re.search(args.assignee[0],f["assignee"]["emailAddress"]) is None :
+        continue
+      displayIssue(d)
+    except NameError :
+      print(d["keys"] + " raised NameError")
+    except :
+      print(" raised Error")
   return
 
 #----------------------------------------------------------------
@@ -107,6 +130,7 @@ def fInspect(args=None) :
   logging.debug(pformat(args) )
   jira=Jira()
   datas=jira.getIssue(args.jirano)
+  #pprint(datas)
   if 'H' in args.show[0] :
     showHeader(datas)
     print(datas["fields"]["description"])
@@ -174,7 +198,7 @@ parserList = subparsers.add_parser('list', help='a help')
 parserList.set_defaults(func=fList)
 parserList.add_argument('--summary','-f',nargs=1,help="filter for list")
 parserList.add_argument('--assignee','-a',nargs=1,help="assignee")
-parserList.add_argument('--components','-c',nargs=1,help="component Bench, Support, Project ",default=['BDISP'])
+parserList.add_argument('--components','-c',nargs=1,help="component Bench, Dip, Internal, Support, Project ",default=['BDISP'])
 parserList.add_argument('--status','-s',nargs=1,help="status Activ,Inact ",default=['A'])
 
 parserSample = subparsers.add_parser('sample', help='a help')
