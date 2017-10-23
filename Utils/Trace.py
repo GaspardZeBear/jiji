@@ -6,6 +6,7 @@ formatter = logging.Formatter('%(asctime)s <@Trace> - %(name)s - %(levelname)s -
 sh.setFormatter(formatter)
 tracer.addHandler(sh)
 tracer.setLevel(logging.INFO)
+tracer.debug("Trace customized " + str(tracer))
 
 def Trace(f) :
   tracer.debug("deco "+ f.__name__)

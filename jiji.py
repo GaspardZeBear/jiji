@@ -33,21 +33,34 @@ def translateStatus(stat) :
   return(stat)
 
 #----------------------------------------------------------------
-def getComponent(fields) :
+def getComponents(fields,sep='') :
   if len(fields["components"]) > 0 :
-    return(fields["components"][0]["name"])
-  return("Unknown")
+    #return(fields["components"][0]["name"])
+    cs=''
+    for c in fields["components"] :
+      if "name" in c :
+        cs = cs + c["name"][0:1] + sep
+    return(cs.rstrip(sep))
+  return("None")
 
+
+#----------------------------------------------------------------
+def isComponentSelected(fields) :
+  cs=set(getComponents(fields))
+  a=set(args.components[0])
+  if len(a & cs) > 0 :
+    return True
+  return False
 
 #----------------------------------------------------------------
 def displayIssue(datas) :
   f=datas["fields"]
-  print('{:13.13};{:6.6};{:6.6};{:6.6};{:5.5};{};{};{:3.3};{:3.3};{:50.50};{:40.40};{:30.30}'.format(
+  print('{:13.13};{:6.6};{:6.6};{:6.6};{:8.8};{};{};{:3.3};{:3.3};{:50.50};{:40.40};{:30.30}'.format(
       datas["key"],
       f["issuetype"]["name"],
       f["status"]["name"],
       translateStatus(f["status"]["name"]),
-      getComponent(f),
+      getComponents(f),
       f["created"][0:10],
       f["updated"][0:10],
       f["creator"]["emailAddress"][0:20],
@@ -71,7 +84,8 @@ def fList(args=None) :
       if f["status"]["name"] in status :
         if status[f["status"]["name"]][0:1] not in args.status[0] :
           continue
-      if f["components"][0]["name"][0:1] not in args.components[0] :
+      #if f["components"][0]["name"][0:1] not in args.components[0] :
+      if not isComponentSelected(f) :
         continue
       if args.summary and re.search(args.summary[0],f["summary"].encode('ascii','replace')) is None :
         continue
@@ -198,7 +212,7 @@ parserList = subparsers.add_parser('list', help='a help')
 parserList.set_defaults(func=fList)
 parserList.add_argument('--summary','-f',nargs=1,help="filter for list")
 parserList.add_argument('--assignee','-a',nargs=1,help="assignee")
-parserList.add_argument('--components','-c',nargs=1,help="component Bench, Dip, Internal, Support, Project ",default=['BDISP'])
+parserList.add_argument('--components','-c',nargs=1,help="component Bench, Dip, Internal, Support, Project, OZI ",default=['BDISPO'])
 parserList.add_argument('--status','-s',nargs=1,help="status Activ,Inact ",default=['A'])
 
 parserSample = subparsers.add_parser('sample', help='a help')
