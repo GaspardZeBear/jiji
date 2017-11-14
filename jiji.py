@@ -39,7 +39,7 @@ def getComponents(fields,sep='') :
     cs=''
     for c in fields["components"] :
       if "name" in c :
-        cs = cs + c["name"][0:1] + sep
+        cs = cs + c["name"][0:3] + sep
     return(cs.rstrip(sep))
   return("None")
 
@@ -55,12 +55,12 @@ def isComponentSelected(fields) :
 #----------------------------------------------------------------
 def displayIssue(datas) :
   f=datas["fields"]
-  print('{:13.13};{:6.6};{:6.6};{:6.6};{:8.8};{};{};{:3.3};{:3.3};{:50.50};{:40.40};{:30.30}'.format(
+  print('{:13.13};{:6.6};{:6.6};{:6.6};{:12.12};{};{};{:3.3};{:3.3};{:50.50};{:40.40};{:30.30}'.format(
       datas["key"],
       f["issuetype"]["name"],
       f["status"]["name"],
       translateStatus(f["status"]["name"]),
-      getComponents(f),
+      getComponents(f,','),
       f["created"][0:10],
       f["updated"][0:10],
       f["creator"]["emailAddress"][0:20],
@@ -120,19 +120,28 @@ def showTransitions(datas) :
     ))
   #pprint(datas)
 
+
 #----------------------------------------------------------------
 def showComments(datas) :
   printMark('Comments')
-  for d in datas["fields"]["comment"]["comments"] :
-    print("\n{}\n;Comment;{:10.10};Author;{:50.50}\n{}\n{}".format(
+  comments=datas["fields"]["comment"]["comments"]
+  print("---------------------> Total " + str(len(comments)) + " comments")
+  if args.back and len(comments) > int(args.back[0]) :
+    start=-int(args.back[0])
+    comments=comments[start:]
+  for d in comments :
+    body="".join([s for s in d["body"].splitlines(True) if s.strip()])
+    print("\n{}\n;Comment;{:10.10};Author;{:50.50}\n".format(
      '-'*100,
      d["created"],
-     d["author"]["emailAddress"],
-     '-'*100,
-     d["body"]
+     d["author"]["emailAddress"]
+    ))
+    print("{}".format(
+     body
     ))
   return
 
+#"".join([s for s in mystr.splitlines(True) if s.strip()])
 #----------------------------------------------------------------
 def showHeader(datas) :
   printMark('Headers')
@@ -178,6 +187,13 @@ def fComment(args=None) :
   jira=Jira()
   datas=jira.addComment(args.jirano,args.body)
   return
+
+#----------------------------------------------------------------
+def fKanby(args=None) :
+  logging.debug(pformat(args) )
+  jira=Jira()
+  return
+
 
 #----------------------------------------------------------------
 def fTransition(args=None) :
@@ -226,6 +242,9 @@ parserInspect = subparsers.add_parser('inspect', help='a help')
 parserInspect.set_defaults(func=fInspect)
 parserInspect.add_argument('jirano',nargs='?',help="item to inspect (given by list)")
 parserInspect.add_argument('--show','-s',nargs=1,help="Comments, Transitions",default=['CHT'])
+parserInspect.add_argument('--back','-b',nargs=1,help="from end, count")
+parserInspect.add_argument('--for','-f',nargs=1,help="from beginning, count")
+parserInspect.add_argument('--exc','-x',nargs=1,help="no text")
 
 parserComment = subparsers.add_parser('comment', help='a help')
 parserComment.set_defaults(func=fComment)
@@ -236,6 +255,10 @@ parserTransition = subparsers.add_parser('transition', help='a help')
 parserTransition.set_defaults(func=fTransition)
 parserTransition.add_argument('jirano',nargs='?',help="item to transition (given by list)")
 parserTransition.add_argument('--status','-s',nargs=1,help="Transition")
+
+parserKanby = subparsers.add_parser('kanby', help='a help')
+parserKanby.set_defaults(func=fKanby)
+
 
 args=parser.parse_args()
 logging.basicConfig(format="%(asctime)s %(funcName)s %(levelname)s %(message)s", level=args.loglevel) 
