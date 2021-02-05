@@ -13,8 +13,8 @@ class Jirak :
 
   @Trace
   def __init__(self) :
-    server={'server': Config.JIRAURL}
-    #print(Config.JIRAID + " " + Config.JIRAPW)
+    server={'server': Config.JIRAURL,'verify':False}
+    print("--->Credentials " + Config.JIRAID + " " + Config.JIRAPW)
     try :
       self.jira = JIRA(options=server,basic_auth=(Config.JIRAID,Config.JIRAPW))
     except Exception as e:
